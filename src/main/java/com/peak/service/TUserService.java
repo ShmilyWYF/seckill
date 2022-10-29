@@ -1,6 +1,7 @@
 package com.peak.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.peak.httpUiltr.HttpEnum;
 import com.peak.httpUiltr.ResponseResult;
 import com.peak.pojo.TUser;
 import com.peak.vo.LoginVo;
@@ -24,7 +25,7 @@ public interface TUserService extends IService<TUser> {
 
     public TUser getUserByCookie(String ticket,HttpServletRequest request,HttpServletResponse response);
 
-    public ResponseResult updatePassword(String ticket,String password,HttpServletRequest request,HttpServletResponse response);
+    public ResponseResult<HttpEnum> updatePassword(String ticket, String password, HttpServletRequest request, HttpServletResponse response);
 
     public void adduser(TUser user);
 
