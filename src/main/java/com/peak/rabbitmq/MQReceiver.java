@@ -44,7 +44,7 @@ public class MQReceiver {
         log.info("接收秒杀信息：" + message);
         SeckillMessage seckillMessage = JSON.parseObject(message, SeckillMessage.class);
         Long goodId = seckillMessage.getGoodId();
-        TUser user = seckillMessage.getUser();
+        SysUserinfo user = seckillMessage.getSysUserinfo();
         //根据商品id拿到商品信息
         GoodsVo goodsVo = goodsService.findGoodsVoByGoodsId(goodId);
         if (goodsVo == null) {

@@ -5,6 +5,7 @@ import com.peak.httpUiltr.ResponseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,6 +22,8 @@ public class GlobalExceptionHandler {
             return ResponseResult.failed(ex.getHttpEnum());
         }else if(e instanceof BindException ex){       //捕获校验绑定参数抛出的异常
             return ResponseResult.failed(HttpEnum.ERROR_600,ex.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+        }else if(e instanceof HttpRequestMethodNotSupportedException ex){
+            return ResponseResult.failed(HttpEnum.ERROR_400,"请求方式错误:"+ex.getMessage());
         }
         return ResponseResult.failed(HttpEnum.ERROR_500,e.toString()+"全局异常处理抛出的异常");
     }

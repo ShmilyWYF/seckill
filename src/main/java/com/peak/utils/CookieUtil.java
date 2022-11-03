@@ -81,7 +81,7 @@ public final class CookieUtil {
      * @Description: 设置Cookie的值 不设置生效时间默认浏览器关闭即失效,也不编码
      */
     public static void setCookie(HttpServletRequest request, HttpServletResponse response, String cookieName, String cookieValue) {
-         setCookie(request, response, cookieName, cookieValue, -1);
+        setCookie(request, response, cookieName, cookieValue, -1);
 
     }
 
@@ -125,7 +125,7 @@ public final class CookieUtil {
      */
     public static void setCookie(HttpServletRequest request, HttpServletResponse response, String cookieName,
                                  String cookieValue, int cookieMaxage, boolean isEncode) {
-       doSetCookie(request, response, cookieName, cookieValue, cookieMaxage, isEncode);
+        doSetCookie(request, response, cookieName, cookieValue, cookieMaxage, isEncode);
     }
 
     /**
@@ -165,7 +165,7 @@ public final class CookieUtil {
      * @Description: 设置Cookie的值，并使其在指定时间内生效
      */
     private static final void doSetCookie(HttpServletRequest request, HttpServletResponse response,
-                                            String cookieName, String cookieValue, int cookieMaxage, boolean isEncode) {
+                                          String cookieName, String cookieValue, int cookieMaxage, boolean isEncode) {
         try {
             if (cookieValue == null) {
                 cookieValue = "";

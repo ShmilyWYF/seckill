@@ -52,29 +52,72 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
-
+    /**  <pre> 前端业务调用
+     *     -@Override
+     *     public TOrder seckill(TUser user, GoodsVo goods) {
+     *         ValueOperations valueOperations = redisTemplate.opsForValue();
+     *
+     *         //根据秒杀商品id查询秒杀商品
+     *         TSeckillGoods seckillGoods = seckillGoodsService.getOne(new QueryWrapper<TSeckillGoods>().eq("goods_id", goods.getId()));
+     *         if (seckillGoods.getStockCount() < 1) {
+     *             //判断是否还有库存
+     *             valueOperations.set("isStockEmpty:" + user.getId(), "0");
+     *             throw new GlobalException(HttpEnum.ERROR_6002);
+     *         }
+     *         //将DB库存数量设置为redis库存预减数量(先减50次产生50个队列，设置数据库数量为0，50个队列生产50个订单)
+     *         seckillGoodsService.update(new UpdateWrapper<TSeckillGoods>().setSql("stock_count = " + "stock_count-1").eq("goods_id", goods.getId()).gt("stock_count", 0));
+     *
+     *         TSeckillOrder isSeckillOrder = (TSeckillOrder) redisTemplate.opsForValue().get("order:" + user.getId() + ":" + goods.getId());
+     *         if (isSeckillOrder != null) {
+     *             valueOperations.set("isStockEmpty:" + user.getId(), "0");
+     *             throw new GlobalException(HttpEnum.ERROR_6003);
+     *         }
+     *         //生成订单
+     *         TOrder order = new TOrder();
+     *         order.setUserId(user.getId());
+     *         order.setGoodsId(goods.getId());
+     *         order.setDeliveryAddrId(0L);
+     *         order.setGoodsName(goods.getGoodsName());
+     *         order.setGoodsCount(1);
+     *         order.setGoodsPrice(seckillGoods.getSeckillPrice());
+     *         order.setOrderChannel(1);
+     *         order.setStatus(0);
+     *         order.setCreateDate(new Date());
+     *         orderMapper.insert(order);
+     *         //生成秒杀订单
+     *         TSeckillOrder seckillOrder = new TSeckillOrder();
+     *         seckillOrder.setUserId(user.getId());
+     *         seckillOrder.setOrderId(order.getId());
+     *         seckillOrder.setGoodsId(goods.getId());
+     *         seckillOrderService.save(seckillOrder);
+     *         redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
+     *         return order;
+     *     }
+     *     </pre>
+     */
+    //前端后台业务模拟调用
     @Override
-    public TOrder seckill(TUser user, GoodsVo goods) {
+    public TOrder seckill(SysUserinfo sysUserinfo, GoodsVo goods) {
         ValueOperations valueOperations = redisTemplate.opsForValue();
 
         //根据秒杀商品id查询秒杀商品
         TSeckillGoods seckillGoods = seckillGoodsService.getOne(new QueryWrapper<TSeckillGoods>().eq("goods_id", goods.getId()));
         if (seckillGoods.getStockCount() < 1) {
             //判断是否还有库存
-            valueOperations.set("isStockEmpty:" + user.getId(), "0");
+            valueOperations.set("isStockEmpty:" + sysUserinfo.getUserId(), "0");
             throw new GlobalException(HttpEnum.ERROR_6002);
         }
         //将DB库存数量设置为redis库存预减数量(先减50次产生50个队列，设置数据库数量为0，50个队列生产50个订单)
         seckillGoodsService.update(new UpdateWrapper<TSeckillGoods>().setSql("stock_count = " + "stock_count-1").eq("goods_id", goods.getId()).gt("stock_count", 0));
 
-        TSeckillOrder isSeckillOrder = (TSeckillOrder) redisTemplate.opsForValue().get("order:" + user.getId() + ":" + goods.getId());
+        TSeckillOrder isSeckillOrder = (TSeckillOrder) redisTemplate.opsForValue().get("order:" + sysUserinfo.getUserId() + ":" + goods.getId());
         if (isSeckillOrder != null) {
-            valueOperations.set("isStockEmpty:" + user.getId(), "0");
+            valueOperations.set("isStockEmpty:" + sysUserinfo.getUserId(), "0");
             throw new GlobalException(HttpEnum.ERROR_6003);
         }
         //生成订单
         TOrder order = new TOrder();
-        order.setUserId(user.getId());
+        order.setUserId(sysUserinfo.getUserId());
         order.setGoodsId(goods.getId());
         order.setDeliveryAddrId(0L);
         order.setGoodsName(goods.getGoodsName());
@@ -86,13 +129,14 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
         orderMapper.insert(order);
         //生成秒杀订单
         TSeckillOrder seckillOrder = new TSeckillOrder();
-        seckillOrder.setUserId(user.getId());
+        seckillOrder.setUserId(sysUserinfo.getUserId());
         seckillOrder.setOrderId(order.getId());
         seckillOrder.setGoodsId(goods.getId());
         seckillOrderService.save(seckillOrder);
-        redisTemplate.opsForValue().set("order:" + user.getId() + ":" + goods.getId(), seckillOrder);
+        redisTemplate.opsForValue().set("order:" + sysUserinfo.getUserId() + ":" + goods.getId(), seckillOrder);
         return order;
     }
+
 
     @Override
     public OrderDetailVo detail(Long orderId) {
@@ -110,16 +154,29 @@ public class TOrderServiceImpl extends ServiceImpl<TOrderMapper, TOrder> impleme
         return detailVo;
     }
 
+    /**
+     * <pre>
+     * 真实业务前端调用
+     * -@Override
+     * public String createPath(TUser user, Long goodsId) {
+     *     String str = MD5util.md5(UUIDUtil.getUUID() + "123456");
+     *     redisTemplate.opsForValue().set("seckillPath:"+user.getId()+":"+goodsId,str,60, TimeUnit.SECONDS);
+     * return str;
+     *     }
+     * </pre>
+     */
+    //前端控制台业务模拟调用
     @Override
-    public String createPath(TUser user, Long goodsId) {
+    public String createPath(SysUserinfo user, Long goodsId) {
         String str = MD5util.md5(UUIDUtil.getUUID() + "123456");
-        redisTemplate.opsForValue().set("seckillPath:"+user.getId()+":"+goodsId,str,60, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set("seckillPath:" + user.getUserId() + ":" + goodsId, str, 60, TimeUnit.SECONDS);
         return str;
     }
 
+
     @Override
     public boolean checkPath(TUser user, Long goodsId, String path) {
-        if(user==null||goodsId<0|| StringUtils.isEmpty(path)){
+        if (user == null || goodsId < 0 || StringUtils.isEmpty(path)) {
             return false;
         }
         String redisPath = (String) redisTemplate.opsForValue().get("seckillPath:" + user.getId() + ":" + goodsId);

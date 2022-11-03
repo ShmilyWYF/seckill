@@ -61,7 +61,7 @@ public class SysUserServiceImpl extends MPJBaseServiceImpl<SysUserMapper, SysUse
     @Override
     public ResponseResult<String> toLogin(HttpServletRequest request, HttpServletResponse response, SysUser user) {
         SysUser sysUser = sysUserMapper.selectOne(new MPJQueryWrapper<SysUser>().selectAll(SysUser.class).eq("username", user.getUsername()));
-        if (sysUser.getUsername() == null) {
+        if (sysUser == null) {
             throw new GlobalException(HttpEnum.ERROR_401, "账号不存在");
         }
         if (!MD5util.inputPassToDBPass(user.getPassword(), sysUser.getSlat()).equals(sysUser.getPassword())) {
@@ -74,7 +74,7 @@ public class SysUserServiceImpl extends MPJBaseServiceImpl<SysUserMapper, SysUse
         String token = UUIDUtil.getUUID() + sysUser.getId();
         redisTemplate.opsForValue().set("sysUser:" + "token" + ":" + token, userinfo, 8400, TimeUnit.SECONDS);
         CookieUtil.setCookie(request, response, "token", token, 8400, true);
-        return ResponseResult.ok(HttpEnum.OK_200, "登录成功");
+        return ResponseResult.ok(HttpEnum.OK_200, "登录成功",token);
     }
 
 }

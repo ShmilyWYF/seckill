@@ -8,15 +8,22 @@ import com.peak.httpUiltr.HttpEnum;
 import com.peak.httpUiltr.ResponseResult;
 import com.peak.pojo.SysUser;
 import com.peak.pojo.SysUserinfo;
+import com.peak.pojo.TUser;
 import com.peak.rabbitmq.MQsender;
 import com.peak.service.SysUserService;
 import com.peak.service.SysUserinfoService;
+import com.peak.service.TGoodsService;
+import com.peak.service.TOrderService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
  * <p>
@@ -70,7 +77,7 @@ public class SysUserController {
      */
     @AccessLimit(needLogin = false)
     @RequestMapping(value = "/tologin",method = RequestMethod.POST)
-    public ResponseResult<String> tologin(SysUser user, @CookieValue(required = false) String token) {
+    public ResponseResult<String> tologin(@Validated@RequestBody SysUser user, @CookieValue(required = false) String token) {
         SysUserinfo userinfo = (SysUserinfo) redisTemplate.opsForValue().get("sysUser:" + "token" + ":" + token);
         if (userinfo != null) {
             throw new GlobalException(HttpEnum.ERROR_401, "请不要重复登录");
@@ -81,6 +88,7 @@ public class SysUserController {
     @AccessLimit(needLogin = false)
     @RequestMapping(value = "/touserinfo",method = RequestMethod.GET)
     public ResponseResult<SysUserinfo> userinfo(@CookieValue String token) {
+        System.out.println(token);
         Boolean istoken = redisTemplate.hasKey("sysUser:" + "token" + ":" + token);
         if(!istoken){
             throw new GlobalException(HttpEnum.ERROR_503,"登录信息已过期,请重新登录!");
@@ -96,6 +104,19 @@ public class SysUserController {
             throw new GlobalException(HttpEnum.ERROR_503,"用户未登录!");
         }
         return sysUserinfoService.tologout(token);
+    }
+
+    @AccessLimit(needLogin = false)
+    @RequestMapping(value = "/istoken",method = RequestMethod.GET)
+    public ResponseResult<String> istoken(@CookieValue(defaultValue = "null") String token) {
+        if(Objects.equals(token, "null")){
+            return ResponseResult.failed(HttpEnum.ERROR_600,"token不存在");
+        }
+        Boolean istoken = redisTemplate.hasKey("sysUser:" + "token" + ":" + token);
+        if(!istoken){
+            return ResponseResult.failed(HttpEnum.OK_200,"token已过期");
+        }
+        return ResponseResult.ok();
     }
 
 }
